@@ -1,5 +1,5 @@
 const express = require("express");
-const { registerUser } = require("../controllers/userController");
+const { registerUser, loginUser } = require("../controllers/userController");
 const { validateRequest } = require("../middleware/validateMiddleware");
 const { body } = require("express-validator");
 
@@ -12,6 +12,14 @@ router.post(
   body("password").isLength({ min: 6 }),
   validateRequest,
   registerUser
+);
+
+router.post(
+  "/login",
+  body("email").isEmail(),
+  body("password").notEmpty(),
+  validateRequest,
+  loginUser
 );
 
 module.exports = router;
