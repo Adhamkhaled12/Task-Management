@@ -60,6 +60,32 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
+//@desc Get Users
+//@route GET /api/users/all-users
+//@access Private
+const getUsers = asyncHandler(async (req, res) => {
+  const users = await User.find();
+  res.json(users);
+});
+
+//@desc Delete User
+//@route DELETE /api/users/:id
+//@access Private
+const deleteUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Find the user by ID
+  const user = await User.findById(id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+  // Delete user
+  await user.deleteOne();
+
+  res.status(200).json({ message: "User deleted successfully." });
+});
+
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -69,4 +95,6 @@ const generateToken = (id) => {
 module.exports = {
   registerUser,
   loginUser,
+  getUsers,
+  deleteUser,
 };

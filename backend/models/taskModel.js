@@ -14,11 +14,17 @@ const taskSchema = new mongoose.Schema(
       enum: ["Low", "Medium", "High"],
       default: "Medium",
     },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-    dueDate: Date,
+    category: { type: String },
+    dueDate: { type: Date },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );
+
+taskSchema.index({ status: 1 });
+taskSchema.index({ priority: 1 });
+taskSchema.index({ dueDate: 1 });
+taskSchema.index({ user: 1, status: 1 });
+taskSchema.index({ user: 1, priority: 1 });
 
 module.exports = mongoose.model("Task", taskSchema);
