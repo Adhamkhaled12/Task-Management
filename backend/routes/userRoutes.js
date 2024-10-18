@@ -4,6 +4,8 @@ const {
   loginUser,
   getUsers,
   deleteUser,
+  requestPasswordReset,
+  resetPassword,
 } = require("../controllers/userController");
 const { validateRequest } = require("../middleware/validateMiddleware");
 const { body } = require("express-validator");
@@ -32,5 +34,11 @@ router.post(
 router.get("/all-users", authenticate, authorizeRole("admin"), getUsers);
 
 router.delete("/:id", authenticate, authorizeRole("admin"), deleteUser);
+
+// Request password reset
+router.post("/request-password-reset", requestPasswordReset);
+
+// password reset
+router.post("/reset-password", resetPassword);
 
 module.exports = router;
