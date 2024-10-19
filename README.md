@@ -29,9 +29,7 @@ Task Management API that allows users to create, view, update, delete, and categ
 
 ## Environment Setup Instructions
 
-1. **Create a .env file in the root of the project:**
-
-   - Create a new file named .env in the root directory of your project.
+1. **Create a .env file in the root of your project:**
 
 2. **Add the following environment variables to your .env file:**
 
@@ -52,8 +50,6 @@ Task Management API that allows users to create, view, update, delete, and categ
      - your-email-password: Replace this with your Gmail password or the app password you generated.
 
 3. **Ensure that you have installed the necessary packages:**
-
-   - Create a new file named .env in the root directory of your project.
 
    ```bash
    npm install dotenv mongoose jsonwebtoken bcryptjs nodemailer express async-handler
@@ -109,7 +105,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
 
 - **Route:** `GET /api/users/verify-email`
 
-  - **Description:** Verify the email address using the verification token sent to the user's email.
+  - **Description:** Verify the email address by clicking on the link sent to your mail which triggers this route.
   - **Query Parameters:**
     - `token`: The verification token received in the email.
   - **Response:**
@@ -207,7 +203,9 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "User not found."
       }
       ```
-      - **Route:** `GET /api/users/all-users`
+
+- **Route:** `GET /api/users/all-users`
+
   - **Description:** Retrieve a list of all users. This route is accessible only to users with the admin role.
   - **Access:** Private (requires admin role)
   - **Request Headers:**
