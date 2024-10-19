@@ -5,6 +5,14 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 //@desc Register new user
 //@route POST /api/users/register
 //@access Public
@@ -16,6 +24,11 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("User already Exist!");
   }
+
+  // Create verification token (hex string) with a 12-hour expiration
+  const verificationToken = crypto.randomBytes(20).toString("hex");
+  const verificationExpires = Date.now() + 12 * 60 * 60 * 1000; // 12 hours
+
   // Hash Password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -25,20 +38,50 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password: hashedPassword,
     role,
+    verificationToken,
+    verificationExpires,
   });
-  // If user is successfully registered
-  if (user) {
-    res.status(201).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      // token: generateToken(user._id),
-    });
-  } else {
+  // Generate verification link
+  const verificationLink = `http://localhost:5000/api/users/verify-email?token=${verificationToken}`;
+  // Send verification email
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: user.email,
+    subject: "Verify Your Email",
+    text: `Please verify your email by clicking the following link: ${verificationLink}`,
+  };
+
+  await transporter.sendMail(mailOptions);
+
+  res
+    .status(201)
+    .json({ message: "User registered. Check your email to verify." });
+});
+
+//@desc Verify email address using the token
+//@route GET /api/users/verify-email
+//@access Public
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.query;
+
+  const user = await User.findOne({
+    verificationToken: token,
+    verificationExpires: { $gt: Date.now() }, // Ensure token is not expired
+  });
+
+  if (!user) {
     res.status(400);
-    throw new Error("Invalid User data");
+    throw new Error("Invalid or expired token.");
   }
+
+  // Mark email as verified and clear token fields
+  user.emailVerified = true;
+  user.verificationToken = undefined;
+  user.verificationExpires = undefined;
+
+  await user.save();
+
+  res.json({ message: "Email verified successfully." });
 });
 
 //@desc Authenticate a User
@@ -49,6 +92,10 @@ const loginUser = asyncHandler(async (req, res) => {
   // Check for user email
   const user = await User.findOne({ email });
   if (user && (await bcrypt.compare(password, user.password))) {
+    if (!user.emailVerified) {
+      res.status(400);
+      throw new Error("Please verify your email before logging in.");
+    }
     res.json({
       _id: user.id,
       name: user.name,
@@ -85,14 +132,6 @@ const deleteUser = asyncHandler(async (req, res) => {
   // Delete user
   await user.deleteOne();
   res.status(200).json({ message: "User deleted successfully." });
-});
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASS,
-  },
 });
 
 //@desc Request password reset
@@ -165,6 +204,7 @@ const generateToken = (id) => {
 
 module.exports = {
   registerUser,
+  verifyEmail,
   loginUser,
   getUsers,
   deleteUser,

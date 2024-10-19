@@ -18,6 +18,7 @@ const createTask = asyncHandler(async (req, res) => {
   // If task is successfully created
   if (task) {
     res.status(201).json({
+      id: task._id,
       title: task.title,
       description: task.description,
       status: task.status,

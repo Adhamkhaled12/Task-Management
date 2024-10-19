@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   registerUser,
+  verifyEmail,
   loginUser,
   getUsers,
   deleteUser,
@@ -22,6 +23,9 @@ router.post(
   validateRequest,
   registerUser
 );
+
+// Email verification route
+router.get("/verify-email", verifyEmail);
 
 router.post(
   "/login",
