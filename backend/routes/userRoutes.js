@@ -43,6 +43,17 @@ router.delete("/:id", authenticate, authorizeRole("admin"), deleteUser);
 router.post("/request-password-reset", requestPasswordReset);
 
 // password reset
-router.post("/reset-password", resetPassword);
+router.post(
+  "/reset-password",
+  [
+    body("newPassword")
+      .notEmpty()
+      .withMessage("New password is required.")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters long."),
+  ],
+  validateRequest,
+  resetPassword
+);
 
 module.exports = router;

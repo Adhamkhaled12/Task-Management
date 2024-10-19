@@ -16,20 +16,15 @@ const createTask = asyncHandler(async (req, res) => {
     user: req.user._id,
   });
   // If task is successfully created
-  if (task) {
-    res.status(201).json({
-      id: task._id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      category: task.category,
-      dueDate: task.dueDate,
-    });
-  } else {
-    res.status(400);
-    throw new Error("Invalid User data");
-  }
+  res.status(201).json({
+    id: task._id,
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+    category: task.category,
+    dueDate: task.dueDate,
+  });
 });
 
 //@desc Get tasks

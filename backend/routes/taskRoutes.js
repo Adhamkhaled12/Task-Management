@@ -21,9 +21,6 @@ router.post(
       .isString()
       .withMessage("Description must be a non-empty string"),
     body("status")
-      .customSanitizer(
-        (value) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-      )
       .isIn(["Pending", "In-Progress", "Done"])
       .withMessage(
         "Invalid status. Accepted values are: Pending, In-Progress, Done"
@@ -77,9 +74,11 @@ router.put(
       .isString()
       .withMessage("Description must be a string"),
     body("status")
+      .optional()
       .isIn(["Pending", "In-Progress", "Done"])
       .withMessage("Invalid status"),
     body("priority")
+      .optional()
       .isIn(["Low", "Medium", "High"])
       .withMessage("Invalid priority"),
     body("category")
