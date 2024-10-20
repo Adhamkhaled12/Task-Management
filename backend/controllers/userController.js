@@ -1,5 +1,7 @@
+const mongoose = require("mongoose");
 const asyncHandler = require("express-async-handler");
 const { User } = require("../models/userModel");
+const { Task } = require("../models/taskModel");
 const { generateToken, sendEmail } = require("../utils/utils");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
