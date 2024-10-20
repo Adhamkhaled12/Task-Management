@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
 const asyncHandler = require("express-async-handler");
 
 // Generate JWT token
@@ -15,4 +16,16 @@ const hashPassword = asyncHandler(async (password) => {
   return await bcrypt.hash(password, salt);
 });
 
-module.exports = { generateToken, hashPassword };
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+const sendEmail = asyncHandler(async (options) => {
+  await transporter.sendMail(options);
+});
+
+module.exports = { generateToken, hashPassword, sendEmail };
