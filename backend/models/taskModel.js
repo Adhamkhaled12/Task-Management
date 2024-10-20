@@ -30,4 +30,6 @@ taskSchema.index({ priority: 1 });
 taskSchema.index({ dueDate: 1 });
 taskSchema.index({ status: 1, priority: 1, dueDate: 1 });
 
-module.exports = mongoose.model("Task", taskSchema);
+const Task = mongoose.model("Task", taskSchema);
+
+module.exports = { Task };

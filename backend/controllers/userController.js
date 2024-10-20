@@ -1,7 +1,6 @@
 const asyncHandler = require("express-async-handler");
-const User = require("../models/userModel");
-const Task = require("../models/taskModel");
-const { generateToken, hashPassword, sendEmail } = require("../utils/utils");
+const { User } = require("../models/userModel");
+const { generateToken, sendEmail } = require("../utils/utils");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
@@ -11,25 +10,30 @@ const crypto = require("crypto");
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
   // Check if user exists
-  const userExists = await User.findOne({ email });
-  if (userExists) {
+  let user = await User.findOne({ email });
+  if (user) {
     res.status(400);
     throw new Error("User already Exist!");
   }
   // Create verification token (hex string) with a 12-hour expiration
   const verificationToken = crypto.randomBytes(20).toString("hex");
   const verificationExpires = Date.now() + 12 * 60 * 60 * 1000; // 12 hours
-  // Hash the password
-  const hashedPassword = await hashPassword(password);
-  // Create User
-  const user = await User.create({
+
+  user = new User({
     name,
     email,
-    password: hashedPassword,
+    password,
     role,
     verificationToken,
     verificationExpires,
   });
+
+  // Hash the password
+  user.password = await user.hashPassword(password);
+
+  // Save the user to the database
+  await user.save();
+
   // Generate verification link
   const verificationLink = `http://localhost:5000/api/users/verify-email?token=${verificationToken}`;
   // Send verification email
@@ -92,7 +96,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 //@desc Get Users
-//@route GET /api/users/all-users
+//@route GET /api/users
 //@access Private
 const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find();
@@ -118,9 +122,9 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 //@desc Request password reset
-//@route POST /api/users/request-password-reset
+//@route POST /api/users/password-reset
 //@access Public
-const requestPasswordReset = asyncHandler(async (req, res) => {
+const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
   if (!user) {
@@ -177,6 +181,6 @@ module.exports = {
   loginUser,
   getUsers,
   deleteUser,
-  requestPasswordReset,
+  forgotPassword,
   resetPassword,
 };
