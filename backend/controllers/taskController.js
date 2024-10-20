@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const Task = require("../models/taskModel");
+const { Task } = require("../models/taskModel");
 
 //@desc Create new task
 //@route POST /api/tasks
@@ -48,7 +48,7 @@ const getTasks = asyncHandler(async (req, res) => {
   if (category) filter.category = category;
 
   const sort = {};
-  // set the key sortBy to the value 1 which will sort in ascending order
+  // set the key sortBy to the value 1 to sort in ascending order
   if (sortBy) sort[sortBy] = 1;
 
   const tasks = await Task.find(filter)
@@ -60,7 +60,7 @@ const getTasks = asyncHandler(async (req, res) => {
 });
 
 //@desc Update task by id
-//@route PUT /api/tasks/:id
+//@route PATCH /api/tasks/:id
 //@access Private
 const updateTask = asyncHandler(async (req, res) => {
   const task = await Task.findOneAndUpdate(

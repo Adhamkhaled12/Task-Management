@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const asyncHandler = require("express-async-handler");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -26,4 +28,11 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date,
 });
 
-module.exports = mongoose.model("User", userSchema);
+userSchema.methods.hashPassword = asyncHandler(async (password) => {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
+});
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = { User };

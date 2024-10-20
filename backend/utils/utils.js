@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const asyncHandler = require("express-async-handler");
 
@@ -9,12 +8,6 @@ const generateToken = (id) => {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
-
-// Hash password with bcrypt
-const hashPassword = asyncHandler(async (password) => {
-  const salt = await bcrypt.genSalt(10);
-  return await bcrypt.hash(password, salt);
-});
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -28,4 +21,4 @@ const sendEmail = asyncHandler(async (options) => {
   await transporter.sendMail(options);
 });
 
-module.exports = { generateToken, hashPassword, sendEmail };
+module.exports = { generateToken, sendEmail };
