@@ -1,5 +1,7 @@
+const mongoose = require("mongoose");
 const asyncHandler = require("express-async-handler");
 const { User } = require("../models/userModel");
+const { Task } = require("../models/taskModel");
 const { generateToken, sendEmail } = require("../utils/utils");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
@@ -108,17 +110,39 @@ const getUsers = asyncHandler(async (req, res) => {
 //@access Private
 const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  // Find the user by ID
-  const user = await User.findById(id);
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
+  // Validate ID
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400);
+    throw new Error("Invalid User ID.");
   }
-  // Delete all tasks associated with the user
-  await Task.deleteMany({ user: user._id });
-  // Delete user
-  await user.deleteOne();
-  res.status(200).json({ message: "User deleted successfully." });
+
+  // Start a session for the transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Find the user by ID
+    const user = await User.findById(id).session(session);
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+    // Delete all tasks associated with the user
+    await Task.deleteMany({ user: user._id }).session(session);
+    // Delete user
+    await user.deleteOne({ session });
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+    res.status(200).json({ message: "User deleted successfully." });
+  } catch (error) {
+    // If any error occurs, abort the transaction
+    await session.abortTransaction();
+    session.endSession();
+
+    // Pass the error to the error-handling middleware
+    throw new Error(error.message || "Failed to delete user.");
+  }
 });
 
 //@desc Request password reset
