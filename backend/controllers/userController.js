@@ -58,9 +58,8 @@ const verifyOTP = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("OTP has expired.");
   }
-  // Delete OTP to prevent double verification
+
   await redis.del(`otp:${userId}`);
-  // Check if the stored OTP matches the provided OTP
   if (storedOTP !== otp) {
     res.status(400);
     throw new Error("Invalid OTP.");
@@ -68,7 +67,7 @@ const verifyOTP = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
   if (!user) {
     res.status(400);
-    throw new Error("Invalid or expired token.");
+    throw new Error("User not found.");
   }
   user.emailVerified = true;
   await user.save();
@@ -124,7 +123,6 @@ const deleteUser = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
-    // Find the user by ID
     const user = await User.findById(id).session(session);
     if (!user) {
       res.status(404);

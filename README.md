@@ -79,7 +79,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
 
 - **Route:** `POST /api/users/register`
 
-  - **Description:** Register a new user. An email will be sent to verify the email address. You will be able to log in only after verifying your email.
+  - **Description:** Register a new user. An email will be sent with an OTP code to verify the email address . You will be able to log in only after verifying your email.
   - **Request Body:**
     ```json
     {
@@ -103,22 +103,37 @@ Make sure to never share your .env file or commit it to version control. Add it 
       }
       ```
 
-- **Route:** `GET /api/users/verify-email`
+- **Route:** `POST /api/users/verify-otp`
 
-  - **Description:** Verify the email address by clicking on the link sent to your mail which triggers this route.
-  - **Query Parameters:**
-    - `token`: The verification token received in the email.
+  - **Description:** Verify the email address by using the OTP code.
+  - **Request Body:**
+    ```json
+    {
+      "userId": "string",
+      "otp": "string"
+    }
+    ```
   - **Response:**
     - **Success (200):**
       ```json
       {
-        "message": "Email verified successfully."
+        "message": "Account verified successfully."
       }
       ```
     - **Error (400):**
       ```json
       {
-        "message": "Invalid or expired token."
+        "message": "OTP has expired."
+      }
+      ```
+      ```json
+      {
+        "message": "Invalid OTP."
+      }
+      ```
+      ```json
+      {
+        "message": "User not found."
       }
       ```
 
@@ -204,7 +219,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
       }
       ```
 
-- **Route:** `GET /api/users/all-users`
+- **Route:** `GET /api/users`
 
   - **Description:** Retrieve a list of all users. This route is accessible only to users with the admin role.
   - **Access:** Private (requires admin role)
@@ -232,7 +247,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
 
 - **Route:** `DELETE /api/users/:id`
 
-  - **Description:** Delete a user by their ID. This route is accessible only to users with the admin role.
+  - **Description:** Delete a user by their ID, it will also delete all tasks related to this user. This route is accessible only to users with the admin role.
   - **Access:** Private (requires admin role)
   - **Request Headers:**
     - `Authorization`: `Bearer <token>` // JWT token for authentication
@@ -257,7 +272,9 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "Unauthorized. Admin role required."
       }
       ```
-      - **Route:** `POST /api/tasks`
+
+- **Route:** `POST /api/tasks`
+
   - **Description:** Create a new task.
   - **Access:** Private (requires JWT)
   - **Request Headers:**
@@ -329,7 +346,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
       }
       ```
 
-- **Route:** `PUT /api/tasks/:id`
+- **Route:** `PATCH /api/tasks/:id`
 
   - **Description:** Update a task by its ID.
   - **Access:** Private (requires JWT)
