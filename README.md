@@ -171,7 +171,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
       }
       ```
 
-- **Route:** `POST /api/users/request-password-reset`
+- **Route:** `POST /api/users/password-reset`
 
   - **Description:** Request a password reset by sending a reset token to the user's email.
   - **Request Body:**
