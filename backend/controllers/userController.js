@@ -2,9 +2,10 @@ const mongoose = require("mongoose");
 const asyncHandler = require("express-async-handler");
 const { User } = require("../models/userModel");
 const { Task } = require("../models/taskModel");
-const { generateToken, sendEmail } = require("../utils/utils");
+const { generateToken, sendEmail, generateOTP } = require("../utils/utils");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const redis = require("../config/redis");
 
 //@desc Register new user
 //@route POST /api/users/register
@@ -17,17 +18,10 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("User already Exist!");
   }
-  // Create verification token (hex string) with a 12-hour expiration
-  const verificationToken = crypto.randomBytes(20).toString("hex");
-  const verificationExpires = Date.now() + 12 * 60 * 60 * 1000; // 12 hours
-
   user = new User({
     name,
     email,
-    password,
     role,
-    verificationToken,
-    verificationExpires,
   });
 
   // Hash the password
@@ -36,41 +30,50 @@ const registerUser = asyncHandler(async (req, res) => {
   // Save the user to the database
   await user.save();
 
-  // Generate verification link
-  const verificationLink = `http://localhost:5000/api/users/verify-email?token=${verificationToken}`;
-  // Send verification email
+  const otp = generateOTP();
+  await redis.set(`otp:${user._id}`, otp, "EX", 600); // 10 minutes
+
   await sendEmail({
     from: process.env.EMAIL,
     to: user.email,
-    subject: "Verify Your Email",
-    text: `Please verify your email by clicking the following link: ${verificationLink}`,
+    subject: "Your OTP code",
+    text: `Your OTP is: ${otp}`,
   });
-  res
-    .status(201)
-    .json({ message: "User registered. Check your email to verify." });
+
+  res.status(201).json({
+    message:
+      "User registered successfully. Please verify your account using the OTP.",
+    userId: user._id,
+  });
 });
 
-//@desc Verify email address using the token
-//@route GET /api/users/verify-email
+//@desc Verify OTP for registration
+//@route POST /api/users/verify-otp
 //@access Public
-const verifyEmail = asyncHandler(async (req, res) => {
-  const { token } = req.query;
-  const user = await User.findOne({
-    verificationToken: token,
-    verificationExpires: { $gt: Date.now() }, // Ensure token is not expired
-  });
-
+const verifyOTP = asyncHandler(async (req, res) => {
+  const { userId, otp } = req.body;
+  // Retrieve OTP from Redis
+  const storedOTP = await redis.get(`otp:${userId}`);
+  if (!storedOTP) {
+    res.status(400);
+    throw new Error("OTP has expired.");
+  }
+  // Delete OTP to prevent double verification
+  await redis.del(`otp:${userId}`);
+  // Check if the stored OTP matches the provided OTP
+  if (storedOTP !== otp) {
+    res.status(400);
+    throw new Error("Invalid OTP.");
+  }
+  const user = await User.findById(userId);
   if (!user) {
     res.status(400);
     throw new Error("Invalid or expired token.");
   }
-  // Mark email as verified and clear token fields
   user.emailVerified = true;
-  user.verificationToken = undefined;
-  user.verificationExpires = undefined;
-
   await user.save();
-  res.json({ message: "Email verified successfully." });
+
+  res.json({ message: "Account verified successfully." });
 });
 
 //@desc Authenticate a User
@@ -131,17 +134,16 @@ const deleteUser = asyncHandler(async (req, res) => {
     await Task.deleteMany({ user: user._id }).session(session);
     // Delete user
     await user.deleteOne({ session });
+
     // Commit the transaction
     await session.commitTransaction();
-    session.endSession();
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
     // If any error occurs, abort the transaction
     await session.abortTransaction();
-    session.endSession();
-
-    // Pass the error to the error-handling middleware
     throw new Error(error.message || "Failed to delete user.");
+  } finally {
+    session.endSession();
   }
 });
 
@@ -191,7 +193,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  user.password = await hashPassword(newPassword);
+  user.password = await user.hashPassword(newPassword);
   // Clear the reset token fields
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
@@ -201,7 +203,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
 module.exports = {
   registerUser,
-  verifyEmail,
+  verifyOTP,
   loginUser,
   getUsers,
   deleteUser,

@@ -22,16 +22,14 @@ const userSchema = new mongoose.Schema({
     default: "user",
   },
   emailVerified: { type: Boolean, default: false },
-  verificationToken: String,
-  verificationExpires: Date,
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 });
 
-userSchema.methods.hashPassword = asyncHandler(async (password) => {
+userSchema.methods.hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(10);
   return await bcrypt.hash(password, salt);
-});
+};
 
 const User = mongoose.model("User", userSchema);
 
