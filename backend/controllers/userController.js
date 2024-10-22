@@ -24,10 +24,8 @@ const registerUser = asyncHandler(async (req, res) => {
     role,
   });
 
-  // Hash the password
   user.password = await user.hashPassword(password);
 
-  // Save the user to the database
   await user.save();
 
   const otp = generateOTP();
@@ -52,6 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
 //@access Public
 const verifyOTP = asyncHandler(async (req, res) => {
   const { userId, otp } = req.body;
+
   // Retrieve OTP from Redis
   const storedOTP = await redis.get(`otp:${userId}`);
   if (!storedOTP) {
@@ -66,7 +65,7 @@ const verifyOTP = asyncHandler(async (req, res) => {
   }
   const user = await User.findById(userId);
   if (!user) {
-    res.status(400);
+    res.status(404);
     throw new Error("User not found.");
   }
   user.emailVerified = true;
@@ -155,12 +154,19 @@ const forgotPassword = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
-  // Generate a reset token
+  // Get existing token for user if exists
+  const existingToken = await redis.get(`resetPassword:email:${user.email}`);
+  if (existingToken) {
+    await redis.del(`resetPassword:token:${existingToken}`);
+    await redis.del(`resetPassword:email:${user.email}`);
+  }
+
+  // Generate new reset token
   const resetToken = crypto.randomBytes(32).toString("hex");
-  // Set the token and expiration date in the user model
-  user.resetPasswordToken = resetToken;
-  user.resetPasswordExpires = Date.now() + 3600000;
-  await user.save();
+
+  // Store both mappings with clear key patterns
+  await redis.set(`resetPassword:token:${resetToken}`, user._id, "EX", 3600);
+  await redis.set(`resetPassword:email:${user.email}`, resetToken, "EX", 3600);
 
   await sendEmail({
     from: process.env.EMAIL,
@@ -180,23 +186,28 @@ const forgotPassword = asyncHandler(async (req, res) => {
 const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.query;
   const { newPassword } = req.body;
-  // Find the user with the token
-  const user = await User.findOne({
-    resetPasswordToken: token,
-    resetPasswordExpires: { $gt: Date.now() }, // Check if token is not expired
-  });
 
-  if (!user) {
+  // Retrieve the user ID from Redis
+  const userId = await redis.get(`resetPassword:token:${token}`);
+
+  if (!userId) {
     res.status(400);
+    throw new Error("Invalid or expired token");
+  }
+  // Find the user by ID
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
     throw new Error("User not found");
   }
 
   user.password = await user.hashPassword(newPassword);
-  // Clear the reset token fields
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
   await user.save();
-  res.json({ message: "Password has been reset successfully." });
+
+  await redis.del(`resetPassword:token:${token}`);
+  await redis.del(`resetPassword:email:${user.email}`);
+
+  res.status(200).json({ message: "Password has been reset successfully." });
 });
 
 module.exports = {

@@ -131,6 +131,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "Invalid OTP."
       }
       ```
+    - **Error (404):**
       ```json
       {
         "message": "User not found."
@@ -212,7 +213,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "Password has been reset successfully."
       }
       ```
-    - **Error (400):**
+    - **Error (404):**
       ```json
       {
         "message": "User not found."
@@ -272,6 +273,8 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "Unauthorized. Admin role required."
       }
       ```
+
+### Task Routes
 
 - **Route:** `POST /api/tasks`
 

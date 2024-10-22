@@ -22,8 +22,6 @@ const userSchema = new mongoose.Schema({
     default: "user",
   },
   emailVerified: { type: Boolean, default: false },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
 });
 
 userSchema.methods.hashPassword = async (password) => {
