@@ -43,9 +43,17 @@ const getTasks = asyncHandler(async (req, res) => {
   // Create filter object
   const filter = { user: req.user._id };
   // if provided add them to the filter
-  if (status) filter.status = status;
-  if (priority) filter.priority = priority;
-  if (category) filter.category = category;
+  if (status) {
+    filter.status = status;
+  }
+
+  if (priority) {
+    filter.priority = priority;
+  }
+
+  if (category) {
+    filter.category = category;
+  }
 
   const sort = {};
   // set the key sortBy to the value 1 to sort in ascending order

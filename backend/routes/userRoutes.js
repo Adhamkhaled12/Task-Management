@@ -4,7 +4,7 @@ const { authorizeRole } = require("../middleware/roleMiddleware");
 const { authenticate } = require("../middleware/authMiddleware");
 const {
   registerUser,
-  verifyEmail,
+  verifyOTP,
   loginUser,
   getUsers,
   deleteUser,
@@ -21,7 +21,7 @@ const router = express.Router();
 
 router.post("/register", registerValidator, validateRequest, registerUser);
 
-router.get("/verify-email", verifyEmail);
+router.post("/verify-otp", verifyOTP);
 
 router.post("/login", loginValidator, validateRequest, loginUser);
 
