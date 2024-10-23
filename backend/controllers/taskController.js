@@ -64,7 +64,7 @@ const getTasks = asyncHandler(async (req, res) => {
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
-  res.json(tasks);
+  res.status(200).json(tasks);
 });
 
 //@desc Update task by id
@@ -78,7 +78,7 @@ const updateTask = asyncHandler(async (req, res) => {
   );
 
   if (!task) return res.status(404).json({ message: "Task not found." });
-  res.json(task);
+  res.status(200).json(task);
 });
 
 //@desc Delete task by id

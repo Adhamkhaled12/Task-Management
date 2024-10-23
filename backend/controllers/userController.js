@@ -71,7 +71,7 @@ const verifyOTP = asyncHandler(async (req, res) => {
   user.emailVerified = true;
   await user.save();
 
-  res.json({ message: "Account verified successfully." });
+  res.status(200).json({ message: "Account verified successfully." });
 });
 
 //@desc Authenticate a User
@@ -89,7 +89,7 @@ const loginUser = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error("Verify your email before logging in.");
   }
-  res.json({
+  res.status(200).json({
     _id: user._id,
     name: user.name,
     email: user.email,

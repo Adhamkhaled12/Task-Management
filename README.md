@@ -213,6 +213,12 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "Password has been reset successfully."
       }
       ```
+    - **Error (400):**
+      ```json
+      {
+        "message": "Invalid or expired token."
+      }
+      ```
     - **Error (404):**
       ```json
       {
@@ -261,16 +267,22 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "User deleted successfully."
       }
       ```
-    - **Error (404):**
+    - **Error (400):**
       ```json
       {
-        "message": "User not found."
+        "message": "Invalid User ID."
       }
       ```
     - **Error (401):**
       ```json
       {
         "message": "Unauthorized. Admin role required."
+      }
+      ```
+    - **Error (404):**
+      ```json
+      {
+        "message": "User not found."
       }
       ```
 
@@ -381,16 +393,16 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "dueDate": "YYYY-MM-DD"
       }
       ```
-    - **Error (404):**
-      ```json
-      {
-        "message": "Task not found."
-      }
-      ```
     - **Error (401):**
       ```json
       {
         "message": "Unauthorized. Please provide a valid token."
+      }
+      ```
+    - **Error (404):**
+      ```json
+      {
+        "message": "Task not found."
       }
       ```
 
@@ -408,16 +420,16 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "Task deleted successfully."
       }
       ```
-    - **Error (404):**
-      ```json
-      {
-        "message": "Task not found."
-      }
-      ```
     - **Error (401):**
       ```json
       {
         "message": "Unauthorized. Please provide a valid token."
+      }
+      ```
+    - **Error (404):**
+      ```json
+      {
+        "message": "Task not found."
       }
       ```
 
