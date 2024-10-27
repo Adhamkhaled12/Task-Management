@@ -164,7 +164,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
   // Generate new reset token
   const resetToken = crypto.randomBytes(32).toString("hex");
 
-  // Store both mappings with clear key patterns
   await redis.set(`resetPassword:token:${resetToken}`, user._id, "EX", 3600);
   await redis.set(`resetPassword:email:${user.email}`, resetToken, "EX", 3600);
 

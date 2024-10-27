@@ -6,6 +6,7 @@ const {
   getTasks,
   updateTask,
   deleteTask,
+  getTaskHistory,
 } = require("../controllers/taskController");
 const {
   createTaskValidator,
@@ -34,5 +35,7 @@ router.patch(
 );
 
 router.delete("/:id", authenticate, deleteTask);
+
+router.get("/:id/history", authenticate, getTaskHistory);
 
 module.exports = router;

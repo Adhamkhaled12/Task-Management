@@ -44,15 +44,17 @@ const updateTaskValidator = [
   body("status")
     .optional()
     .isIn(["Pending", "In-Progress", "Done"])
-    .withMessage("Invalid status"),
+    .withMessage(
+      "Invalid status. Accepted values are: Pending, In-Progress, Done"
+    ),
   body("priority")
     .optional()
     .isIn(["Low", "Medium", "High"])
-    .withMessage("Invalid priority"),
+    .withMessage("Invalid priority. Accepted values are: Low, Medium, High"),
   body("category")
     .optional()
-    .isString()
-    .withMessage("Category must be a string"),
+    .isIn(["Work", "Personal"])
+    .withMessage("Invalid category. Accepted values are: Work, Personal"),
   body("dueDate").optional().isISO8601().withMessage("Invalid date format"),
 ];
 
