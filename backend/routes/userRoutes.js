@@ -29,7 +29,7 @@ router.get("/", authenticate, authorizeRole("admin"), getUsers);
 
 router.delete("/:id", authenticate, authorizeRole("admin"), deleteUser);
 
-router.post("/password-reset", forgotPassword);
+router.post("/forgot-password", forgotPassword);
 
 router.post(
   "/reset-password",

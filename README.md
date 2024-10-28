@@ -1,6 +1,6 @@
 # Task Management API
 
-Task Management API that allows users to create, view, update, delete, and categorize tasks. The API should also provide user authentication and authorization using JWT.
+Task Management API that allows users to create, view, update, delete, and categorize tasks. The API provides user authentication and authorization using JWT. Audit logs to track changes for each task that act as a task history and the ability to archive completed tasks to keep the active task list uncluttered and to retrieve them when needed.
 
 ## Table of Contents
 
@@ -52,7 +52,7 @@ Task Management API that allows users to create, view, update, delete, and categ
 3. **Ensure that you have installed the necessary packages:**
 
    ```bash
-   npm install dotenv mongoose jsonwebtoken bcryptjs nodemailer express async-handler
+   npm install dotenv mongoose jsonwebtoken bcryptjs nodemailer express async-handler ioredis helmet cors
    ```
 
 4. **Set up your MongoDB:**
@@ -63,6 +63,49 @@ Task Management API that allows users to create, view, update, delete, and categ
      - Go to your Google Account settings.
      - Navigate to the Security section.
      - Enable "Less secure app access" or create an app password if you have two-factor authentication enabled.
+6. **Set up Redis:**
+
+- **Make sure you have Redis installed and running on your machine. You can install it using the following methods based on your operating system:**
+
+  - **For Windows:**
+    - **Download the Redis installer from [Microsoft's GitHub repository](https://github.com/microsoftarchive/redis/releases).**
+    - **Run the installer and follow the setup instructions.**
+  - **For macOS:**
+    - **Use Homebrew to install Redis:**
+      ```bash
+      brew install redis
+      ```
+  - **For Linux:**
+
+    - **Install Redis using your package manager. For example, on Ubuntu:**
+      ```bash
+      sudo apt update
+      sudo apt install redis-server
+      ```
+
+  - **Start the Redis server by running the following command:**
+    - **For Windows:**
+      ```bash
+      redis-server
+      ```
+    - **For macOS and Linux:**
+      ```bash
+      redis-server
+      ```
+  - **You should see logs indicating that the Redis server is running.**
+
+  - **To test the Redis connection, open a new terminal window and type:**
+    ```bash
+    redis-cli
+    ```
+    **Then, run a simple command to check if it's working:**
+    ```bash
+    ping
+    ```
+    **If everything is set up correctly, it should return:**
+    ```
+    PONG
+    ```
 
 ## Note
 
@@ -79,7 +122,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
 
 - **Route:** `POST /api/users/register`
 
-  - **Description:** Register a new user. An email will be sent with an OTP code to verify the email address . You will be able to log in only after verifying your email.
+  - **Description:** Register a new user. An email will be sent with an OTP code to verify the email address . You will be able to login after verifying your email.
   - **Request Body:**
     ```json
     {
@@ -172,7 +215,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
       }
       ```
 
-- **Route:** `POST /api/users/password-reset`
+- **Route:** `POST /api/users/forgot-password`
 
   - **Description:** Request a password reset by sending a reset token to the user's email.
   - **Request Body:**
@@ -315,7 +358,8 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "status": "string",
         "priority": "string",
         "category": "string",
-        "dueDate": "YYYY-MM-DD"
+        "dueDate": "YYYY-MM-DD",
+        "archived": "boolean"
       }
       ```
     - **Error (401):**
@@ -327,7 +371,7 @@ Make sure to never share your .env file or commit it to version control. Add it 
 
 - **Route:** `GET /api/tasks`
 
-  - **Description:** Retrieve a list of tasks. You can filter tasks by `status`, `priority`, and `category`, and sort them using `sortBy`, with pagination.
+  - **Description:** Retrieve a list of active tasks. You can filter tasks by `status`, `priority`, and `category`, and sort them using `sortBy`, with pagination.
   - **Access:** Private (requires JWT)
   - **Request Headers:**
     - `Authorization`: `Bearer <token>` // JWT token for authentication
@@ -350,6 +394,10 @@ Make sure to never share your .env file or commit it to version control. Add it 
           "priority": "string",
           "category": "string",
           "dueDate": "YYYY-MM-DD"
+          "user": "string",
+          "archived": "boolean",
+          "createdAt": "YYYY-MM-DDTHH:MM:SS.sssZ",
+          "updatedAt": "YYYY-MM-DDTHH:MM:SS.sssZ"
         }
         // More tasks...
       ]
@@ -390,7 +438,11 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "status": "string",
         "priority": "string",
         "category": "string",
-        "dueDate": "YYYY-MM-DD"
+        "dueDate": "YYYY-MM-DD",
+        "user": "string",
+        "archived": "boolean",
+        "createdAt": "YYYY-MM-DDTHH:MM:SS.sssZ",
+        "updatedAt": "YYYY-MM-DDTHH:MM:SS.sssZ"
       }
       ```
     - **Error (401):**
@@ -432,6 +484,159 @@ Make sure to never share your .env file or commit it to version control. Add it 
         "message": "Task not found."
       }
       ```
+- **Route:** `GET /api/tasks/:id/history`
+
+  - **Description:** Retrieve the history of changes made to a specific task, including who modified it and when.
+  - **Access:** Private (requires JWT)
+  - **Request Headers:**
+    - `Authorization`: `Bearer <token>` // JWT token for authentication
+  - **Path Parameters:**
+    - `id`: The ID of the task for which the history is retrieved.
+  - **Response:**
+  - **Success (200):**
+
+  ```json
+  [
+    {
+      "taskId": "string",
+      "modifiedBy": {
+        "name": "string",
+        "email": "string"
+      },
+      "changeType": "string",
+      "updates": [
+        {
+          "field": "string",
+          "oldValue": "string",
+          "newValue": "string"
+        }
+      ],
+      "timestamp": "YYYY-MM-DDTHH:MM:SS.sssZ"
+    }
+    // More history entries...
+  ]
+  ```
+
+  - **Error (404):**
+    ```json
+    {
+      "message": "No history found for this task."
+    }
+    ```
+
+- **Route:** `PATCH /api/tasks/:id/archive`
+
+  - **Description:** Archive a task by ID, marking it as done and preventing it from appearing in the active task list.
+  - **Access:** Private (requires JWT)
+  - **Request Headers:**
+    - `Authorization`: `Bearer <token>` // JWT token for authentication
+  - **Path Parameters:**
+    - `id`: The ID of the task to be archived.
+  - **Response:**
+  - **Success (200):**
+
+  ```json
+  {
+    "message": "Task archived successfully.",
+    "task": {
+      "_id": "string",
+      "title": "string",
+      "description": "string",
+      "status": "Done",
+      "priority": "string",
+      "category": "string",
+      "dueDate": "YYYY-MM-DD",
+      "user": "string",
+      "archived": true,
+      "createdAt": "YYYY-MM-DDTHH:MM:SS.sssZ",
+      "updatedAt": "YYYY-MM-DDTHH:MM:SS.sssZ"
+    }
+  }
+  ```
+
+  - **Error (404):**
+    ```json
+    {
+      "message": "Task not found or already archived."
+    }
+    ```
+  - **Error (500):**
+    ```json
+    {
+      "message": "Failed to archive task. <error message>."
+    }
+    ```
+
+- **Route:** `GET /api/tasks/archived?page=1&limit=10`
+
+  - **Description:** Retrieve a list of archived tasks for the authenticated user with pagination.
+  - **Access:** Private (requires JWT)
+  - **Request Headers:**
+    - `Authorization`: `Bearer <token>` // JWT token for authentication
+  - **Query Parameters:**
+    - `page`: Specify the page number for pagination (default is 1).
+    - `limit`: Specify the number of tasks per page (default is 10).
+  - **Response:**
+  - **Success (200):**
+
+  ```json
+  [
+    {
+      "_id": "string",
+      "title": "string",
+      "description": "string",
+      "status": "Done",
+      "priority": "string",
+      "category": "string",
+      "dueDate": "YYYY-MM-DD",
+      "user": "string",
+      "archived": true,
+      "createdAt": "YYYY-MM-DDTHH:MM:SS.sssZ",
+      "updatedAt": "YYYY-MM-DDTHH:MM:SS.sssZ"
+    }
+    // More archived tasks...
+  ]
+  ```
+
+- **Route:** `PATCH /api/tasks/:id/restore`
+  - **Description:** Restore an archived task by ID, marking it as active and setting its status to "Pending.".
+  - **Access:** Private (requires JWT)
+  - **Request Headers:**
+    - `Authorization`: `Bearer <token>` // JWT token for authentication
+  - **Path Parameters:**
+    - `id`: The ID of the task to be restored.
+  - **Response:**
+  - **Success (200):**
+  ```json
+  {
+    "message": "Task restored successfully.",
+    "task": {
+      "_id": "string",
+      "title": "string",
+      "description": "string",
+      "status": "Pending",
+      "priority": "string",
+      "category": "string",
+      "dueDate": "YYYY-MM-DD",
+      "user": "string",
+      "archived": false,
+      "createdAt": "YYYY-MM-DDTHH:MM:SS.sssZ",
+      "updatedAt": "YYYY-MM-DDTHH:MM:SS.sssZ"
+    }
+  }
+  ```
+  - **Error (404):**
+    ```json
+    {
+      "message": "Archived task not found."
+    }
+    ```
+  - **Error (500):**
+    ```json
+    {
+      "message": "Failed to restore task. <error message>."
+    }
+    ```
 
 ## License
 

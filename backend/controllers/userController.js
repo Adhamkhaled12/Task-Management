@@ -145,7 +145,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 //@desc Request password reset
-//@route POST /api/users/password-reset
+//@route POST /api/users/forgot-password
 //@access Public
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
