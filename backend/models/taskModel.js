@@ -21,6 +21,7 @@ const taskSchema = new mongoose.Schema(
     },
     dueDate: { type: Date, required: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    archived: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

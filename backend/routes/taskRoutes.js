@@ -7,11 +7,17 @@ const {
   updateTask,
   deleteTask,
   getTaskHistory,
+  archiveTask,
+  getArchivedTasks,
+  restoreArchivedTask,
 } = require("../controllers/taskController");
 const {
   createTaskValidator,
   getTasksValidator,
   updateTaskValidator,
+  deleteTaskValidator,
+  archiveTaskValidator,
+  restoreArchivedTaskValidator,
 } = require("../middleware/taskValidator");
 
 const router = express.Router();
@@ -34,8 +40,32 @@ router.patch(
   updateTask
 );
 
-router.delete("/:id", authenticate, deleteTask);
+router.delete(
+  "/:id",
+  authenticate,
+  deleteTaskValidator,
+  validateRequest,
+  deleteTask
+);
 
 router.get("/:id/history", authenticate, getTaskHistory);
+
+router.patch(
+  "/:id/archive",
+  authenticate,
+  archiveTaskValidator,
+  validateRequest,
+  archiveTask
+);
+
+router.get("/archived", authenticate, getArchivedTasks);
+
+router.patch(
+  "/:id/restore",
+  authenticate,
+  restoreArchivedTaskValidator,
+  validateRequest,
+  restoreArchivedTask
+);
 
 module.exports = router;

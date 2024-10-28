@@ -1,4 +1,4 @@
-const { body, query } = require("express-validator");
+const { body, query, param } = require("express-validator");
 
 const createTaskValidator = [
   body("title").notEmpty().withMessage("Task title is required"),
@@ -36,6 +36,7 @@ const getTasksValidator = [
 ];
 
 const updateTaskValidator = [
+  param("id").isMongoId().withMessage("Invalid task ID."),
   body("title").optional().notEmpty().withMessage("Task title is required"),
   body("description")
     .optional()
@@ -58,8 +59,23 @@ const updateTaskValidator = [
   body("dueDate").optional().isISO8601().withMessage("Invalid date format"),
 ];
 
+const deleteTaskValidator = [
+  param("id").isMongoId().withMessage("Invalid task ID."),
+];
+
+const archiveTaskValidator = [
+  param("id").isMongoId().withMessage("Invalid task ID."),
+];
+
+const restoreArchivedTaskValidator = [
+  param("id").isMongoId().withMessage("Invalid task ID."),
+];
+
 module.exports = {
   createTaskValidator,
   getTasksValidator,
   updateTaskValidator,
+  deleteTaskValidator,
+  archiveTaskValidator,
+  restoreArchivedTaskValidator,
 };
