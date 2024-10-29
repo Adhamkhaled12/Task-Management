@@ -57,6 +57,12 @@ const updateTaskValidator = [
     .isIn(["Work", "Personal"])
     .withMessage("Invalid category. Accepted values are: Work, Personal"),
   body("dueDate").optional().isISO8601().withMessage("Invalid date format"),
+  body("archived")
+    .not()
+    .exists()
+    .withMessage(
+      "You cannot modify 'archived' directly. Change the status to 'Done' or use the archive route"
+    ),
 ];
 
 const deleteTaskValidator = [
